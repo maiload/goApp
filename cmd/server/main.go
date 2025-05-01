@@ -35,6 +35,7 @@ func (s Students) Less(i, j int) bool {
 func MakeWebHandler() http.Handler {
 	mux := Gmux.NewRouter()
 	mux.HandleFunc("/students/{id:[0-9]+}", GetStudentListHandler).Methods("GET")
+	mux.HandleFunc("/students", PostStudentHandler).Methods("POST")
 	students = make(map[int]Student)
 	students[1] = Student{1, "aaa", 18, 87}
 	students[2] = Student{2, "bbb", 19, 98}
@@ -44,7 +45,7 @@ func MakeWebHandler() http.Handler {
 }
 
 func GetStudentListHandler(w http.ResponseWriter, r *http.Request) {
-	println(r.URL.Path)
+	println("GET" + r.URL.Path)
 	vars := Gmux.Vars(r)
 	id, _ := strconv.Atoi(vars["id"])
 	student, ok := students[id]
@@ -59,6 +60,20 @@ func GetStudentListHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(student)
+}
+
+func PostStudentHandler(w http.ResponseWriter, r *http.Request) {
+	println("POST" + r.URL.Path)
+	var student Student
+	err := json.NewDecoder(r.Body).Decode(&student)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	lastId++
+	student.Id = lastId
+	students[lastId] = student
+	w.WriteHeader(http.StatusCreated)
 }
 
 func main() {
