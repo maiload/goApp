@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	Gmux "github.com/gorilla/mux"
+	"github.com/urfave/negroni"
 	"net/http"
 	"sort"
 	"strconv"
@@ -48,7 +49,6 @@ func MakeWebHandler() http.Handler {
 }
 
 func GetStudentListHandler(w http.ResponseWriter, r *http.Request) {
-	println("GET" + r.URL.Path)
 	list := make(Students, 0)
 	for _, student := range students {
 		list = append(list, student)
@@ -60,7 +60,6 @@ func GetStudentListHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetStudentHandler(w http.ResponseWriter, r *http.Request) {
-	println("GET" + r.URL.Path)
 	vars := Gmux.Vars(r)
 	id, _ := strconv.Atoi(vars["id"])
 	student, ok := students[id]
@@ -74,7 +73,6 @@ func GetStudentHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func PostStudentHandler(w http.ResponseWriter, r *http.Request) {
-	println("POST" + r.URL.Path)
 	var student Student
 	err := json.NewDecoder(r.Body).Decode(&student)
 	if err != nil {
@@ -88,7 +86,6 @@ func PostStudentHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteStudentHandler(w http.ResponseWriter, r *http.Request) {
-	println("DELETE" + r.URL.Path)
 	vars := Gmux.Vars(r)
 	id, _ := strconv.Atoi(vars["id"])
 	_, ok := students[id]
@@ -103,5 +100,8 @@ func DeleteStudentHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	port := ":3030"
 	fmt.Printf("WebServer Started %s\n", port)
-	http.ListenAndServe(port, MakeWebHandler())
+	mux := MakeWebHandler()
+	n := negroni.Classic()
+	n.UseHandler(mux)
+	http.ListenAndServe(port, n)
 }
